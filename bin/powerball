@@ -1,0 +1,81 @@
+#! /usr/bin/env ruby
+require 'powerball'
+require 'optparse'
+require 'yaml'
+
+options = {
+  :attendees => 'attendees.csv',
+  :winners   => 'winners.csv',
+  :channel   => 'apitesting',
+}
+options.merge!(YAML.load_file('config.yaml')) rescue nil
+OptionParser.new { |opts|
+    opts.banner = "Usage : powerball [-t <token>] [-c <channel>] [-a <admins>] [--starting '2017-12-07 13:00 UTC']
+
+         -- Starts the Powerball lotto bot.
+"
+
+    opts.on("-t TOKEN", "--token TOKEN", "Slack token.") do |arg|
+        options[:token] = arg
+    end
+
+    opts.on("-c CHANNEL", "--channel CHANNEL", "Slack channel.") do |arg|
+        options[:channel] = arg
+    end
+
+    opts.on("-a ADMINS", "--admins ADMINS", "Comma separated list of admin Slack usernames") do |arg|
+        options[:admins] = arg.split
+    end
+
+    opts.on("--attendees PATH", "Path to CSV file from EventBrite containing attendees.") do |arg|
+        options[:attendees] = arg
+    end
+
+    opts.on("--winners PATH", "Path to CSV file to save the winners in.") do |arg|
+        options[:winners] = arg
+    end
+
+    opts.on("--starting TIME", "Time to start the drawing.") do |arg|
+        options[:starting] = arg
+    end
+
+    opts.separator('')
+
+    opts.on("-h", "--help", "Displays this help") do
+        puts
+        puts opts
+        puts
+        exit
+    end
+}.parse!
+
+lottery = Powerball::Lottery.new(options[:attendees], options[:winners])
+slack   = Powerball::Slack.new(options[:token], options[:channel], lottery, options[:admins])
+
+Thread.new do
+  slack.start!
+end
+
+if options[:starting]
+  time = [Time.parse(options[:starting]) - Time.now, 0].max
+
+  if time > 86400
+    puts "Drawings start in about #{(time/86400).round} days..."
+  elsif time > 3600
+    puts "Drawings start in about #{(time/3600).round} hours..."
+  elsif time > 60
+    puts "Drawings start in about #{(time/60).round} minutes..."
+  elsif time > 0
+    puts "Drawings start in about #{time} seconds..."
+  else
+    puts "Starting time expired; drawings commence now!"
+  end
+
+  sleep(time)
+end
+
+Clockwork.lottery = lottery
+Clockwork::run
+
+Thread.join
+
