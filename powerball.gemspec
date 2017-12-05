@@ -12,7 +12,7 @@ Gem::Specification.new do |s|
   s.has_rdoc          = false
   s.require_path      = "lib"
   s.executables       = %w( powerball )
-  s.files             = %w( README.md LICENSE )
+  s.files             = %w( README.md )
   s.files            += Dir.glob("lib/**/*")
   s.files            += Dir.glob("bin/**/*")
 
