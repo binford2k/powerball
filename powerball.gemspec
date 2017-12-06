@@ -18,6 +18,7 @@ Gem::Specification.new do |s|
 
   s.add_dependency      "clockwork"
   s.add_dependency      "slack-ruby-client"
+  s.add_dependency      "faye-websocket"
 
   s.description       = <<-desc
     This is a stupid simple Slack bot that just draws a winner each hour from
