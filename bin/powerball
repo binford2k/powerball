@@ -51,27 +51,40 @@ OptionParser.new { |opts|
 
 lottery = Powerball::Lottery.new(options[:attendees], options[:winners])
 slack   = Powerball::Slack.new(options[:token], options[:channel], lottery, options[:admins])
+start   = Time.parse(options[:starting])
 
 Thread.new do
   slack.start!
 end
 
 if options[:starting]
-  time = [Time.parse(options[:starting]) - Time.now, 0].max
+  time = [start - Time.now, 0].max
 
   if time > 86400
-    puts "Drawings start in about #{(time/86400).round} days..."
+    puts "INFO: Drawings start in about #{(time/86400).round} days..."
   elsif time > 3600
-    puts "Drawings start in about #{(time/3600).round} hours..."
+    puts "INFO: Drawings start in about #{(time/3600).round} hours..."
   elsif time > 60
-    puts "Drawings start in about #{(time/60).round} minutes..."
+    puts "INFO: Drawings start in about #{(time/60).round} minutes..."
   elsif time > 0
-    puts "Drawings start in about #{time} seconds..."
+    puts "INFO: Drawings start in about #{time.round} seconds..."
   else
-    puts "Starting time expired; drawings commence now!"
+    puts "INFO: Starting time expired; drawings commence now!"
   end
 
   sleep(time)
+end
+
+# start recording who speaks
+slack.tracking = true
+puts 'INFO: Event has started!'
+
+# we don't want to give out the first prize prematurely
+if Time.now.min == 0
+  puts "WARNING: Skipping the first drawing because it's less than a minute away!"
+  puts "INFO: if you'd like to run the drawing anyways, trigger it manually with 'powerball draw'"
+  sleep(75)
+  puts 'INFO: starting the lottery timer now.'
 end
 
 Clockwork.lottery = lottery

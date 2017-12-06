@@ -1,8 +1,12 @@
 require 'slack-ruby-client'
+require 'set'
+require 'yaml'
 
 class Powerball::Slack
+  attr_accessor :tracking
 
   def initialize(token, channel, lottery, admins = [] )
+
     Slack.configure do |config|
       config.token = token
     end
@@ -34,6 +38,10 @@ class Powerball::Slack
                 ]
 
     @lottery.chatroom = self
+    @participating    = YAML.load_file('participating.yaml') rescue Set.new
+    at_exit do
+      File.write('participating.yaml', @participating.to_yaml)
+    end
 
     @client.on :hello do
       puts "Successfully connected '#{@client.self.name}' to the '#{@client.team.name}' team at https://#{@client.team.domain}.slack.com."
@@ -51,6 +59,8 @@ class Powerball::Slack
 
     @client.on :message do |data|
       puts data
+
+      @participating.add(data.user) if @tracking
 
       case data.text
       when "<@#{@client.self.id}> hi", 'powerball hi', "hi <@#{@client.self.id}>", 'hi powerball' then
@@ -77,8 +87,7 @@ class Powerball::Slack
 
       data = @client.web_client.conversations_members( :channel => chan, :limit => 500 )
       data['members'].map do |user|
-        # we only want active users!
-        next unless @client.web_client.users_getPresence(:user => user)['presence'] == 'active'
+        next unless @participating.include?(user)
 
         @client.web_client.users_info(:user => user)['user']['name'] rescue nil
       end.compact

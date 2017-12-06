@@ -50,7 +50,7 @@ class Powerball::Lottery
       active.include? attendee[13]
     end
 
-    puts "INFO: eligible and active attendees: #{pool.map {|a| "#{a[2]} #{a[3]} (#{a[13]})" }.inspect}"
+    puts "INFO: eligible participants: #{pool.map {|a| "#{a[2]} #{a[3]} (#{a[13]})" }.inspect}"
 
     if pool.size > 0
       winner = pool.sample
@@ -61,7 +61,7 @@ class Powerball::Lottery
       @chatroom.alert_admins("New winner: #{winner[2]} #{winner[3]} (#{winner[13]})")
       write_winners
     else
-      @chatroom.alert_admins("WARNING: there are no currently eligible active members.")
+      @chatroom.alert_admins("WARNING: there are no currently eligible participants.")
     end
   end
 
