@@ -31,11 +31,21 @@ class Powerball::Lottery
         || email.end_with?('@puppetlabs.com'))
     end
 
+    # normalize slack usernames to increase chances of matching properly
     @attendees.map! do |attendee|
-      attendee[13].strip!
-      attendee[13].slice!(0) if attendee[13].start_with?('@')
+      begin
+        puts "No slack handle for #{attendee[2]} #{attendee[3]} <#{attendee[4]}>" if attendee[13].empty?
 
-      attendee
+        attendee[13].strip!
+        attendee[13].downcase!
+        attendee[13].slice!(0) if attendee[13].start_with?('@')
+        attendee[13].gsub!(/\W/, '.')
+
+        attendee
+      rescue => e
+        puts e.message
+        puts attendee.inspect
+      end
     end
 
     puts "INFO: #{@attendees.size} eligible attendees"
