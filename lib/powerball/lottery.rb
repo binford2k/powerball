@@ -19,6 +19,9 @@ class Powerball::Lottery
     @attendees = CSV.read(attendees) rescue []
     @header    = @attendees.shift # remove header
 
+    @winners.shift
+    @attendees = @attendees - @winners # remove existing winners
+
     @attendees.reject! do |attendee|
       email   = attendee[4].strip.downcase
       company = attendee[16].strip.downcase
